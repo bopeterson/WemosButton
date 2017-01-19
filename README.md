@@ -3,7 +3,7 @@ Arduino library to make it easy to use buttons on Wemos and other ESP8266-based 
 
 Download and put WemosButton-folder + files in Arduino/Libraries
 
-Include in your skecth with 
+Include the library in your sketch with 
 
 ```cpp
 #include "WemosButton.h"
