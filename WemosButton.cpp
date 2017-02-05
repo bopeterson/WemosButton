@@ -18,36 +18,105 @@ This leaves pins D3, D5, D6 and D7 available for INPUT_PULLUP without affecting 
 
 */
 
+#if WEMBUT_DEBUG
+int WemosButton::_lastPressedNumber = -1;
+#endif
+
 WemosButton::WemosButton() {
-  _buttonState = HIGH;
-  _lastButtonState = HIGH;
-  _lastDebounceTime = 0;
+    _buttonState = NOTPRESSED;
+    _lastButtonState = NOTPRESSED; //note: this is the last *stable* state
+    _lastStateSwitchTime = 0;
+    _lastPressTime = 0;
+    _onHold = false;
 }
 
 void WemosButton::begin(int pin) {
     _pin = pin;
     pinMode(_pin, INPUT_PULLUP); //active low
+    reading = digitalRead(_pin);
+    _buttonState = reading;
+    _lastButtonState = _buttonState; //note: this is the last *stable* state
 }
 
 bool WemosButton::readButton() {
-  //button connected to pullup and ground, ie LOW=PRESSED
-  unsigned long debounceDelay = 50;
-  int reading = digitalRead(_pin);
-  int pressDetected=false;
-  if (reading != _lastButtonState) {
-    // reset the debouncing timer
-    _lastDebounceTime = millis();
-  }
+    return readButtonAdvanced(0) & PRESS_DETECTED;
+}
 
-  if ((millis() - _lastDebounceTime) > debounceDelay) {
-    if (reading != _buttonState) {
-      _buttonState = reading;
-      if (_buttonState == LOW) {
-        pressDetected=true;
-      }
+byte WemosButton::readButtonAdvanced(unsigned long holdTime) {
+    //detects press, release and hold
+    //button connected to pullup and ground, ie LOW=PRESSED
+    unsigned long debounceDelay = 15;
+    reading = digitalRead(_pin);
+    byte pressDetected=false;
+    byte releaseDetected=false;
+    byte holdDetected=false;
+    byte holdReleaseDetected=false;
+
+    if (reading != _lastButtonState) {
+        // reset the debouncing timer
+        _lastStateSwitchTime = millis();
     }
-  }
-  _lastButtonState = reading;  
-  return pressDetected;
+    
+    
+    if ((millis() - _lastStateSwitchTime) > debounceDelay) {
+        if (reading != _buttonState) {
+            //stable state change detected
+            _buttonState = reading;
+            if (_buttonState == PRESSED) {
+                //stable press detected
+                pressDetected=true;
+                _lastPressTime = millis();
+            } else {
+                //stable release detected
+                releaseDetected=true;
+                if (_onHold) {
+                    holdReleaseDetected=true;
+                    _onHold=false;
+                }
+            }
+        }
+    }
+    
+    if ((millis() - _lastPressTime) > holdTime && holdTime != 0) {
+        if (_buttonState == PRESSED && !_onHold) {
+            //_lastHoldTime=millis();
+            _onHold = true;
+            holdDetected=true;
+        }
+    }
+    _lastButtonState = reading;
+
+#if WEMBUT_DEBUG
+    byte darray[]={D0,D1,D2,D3,D4,D5,D6,D7,D8};
+    while (Serial.available()) {
+        _lastPressedNumber = Serial.read()-48;
+    }
+
+    if (_lastPressedNumber>=0 && _lastPressedNumber<=8) {
+        if (darray[_lastPressedNumber]==_pin) {
+            pressDetected = true;
+            _lastPressedNumber=-1;
+        }
+    }
+#endif
+    
+    byte result = 0x00; //hex for 0000 0000
+    if (pressDetected) {
+        result |= PRESS_DETECTED; // turn on press detected bit
+    }
+    if (releaseDetected) {
+        result |= RELEASE_DETECTED; // turn on release detected bit
+    }
+    if (holdDetected) {
+        result |= HOLD_DETECTED; // turn on hold detected bit
+    }
+    if (holdReleaseDetected) {
+        result |= HOLD_RELEASE_DETECTED; // turn on hold release detected bit
+    }
+    
+    //put in bit pattern and return
+    
+
+    return result;
 }
 

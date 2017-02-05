@@ -21,3 +21,7 @@ The pins on the Wemos-boards can be used without external pull up resistors in t
 - Pin D4 is connected to BUILTIN_LED and can be used but will make the LED flash when the button is pressed
 
 This leaves pins D3, D5, D6 and D7 available for INPUT_PULLUP without affecting OLED or BUILTIN_LED. D0 and D8 can be used with INPUT_PULLDOWN_16 and INPUT respectively if additional inputs are needed
+
+## How to use
+
+There are two methods, `readButton()` and `readButtonAdvanced()` that are available. `readButton()` is the simple one that only detects when a button is pressed. `readButtonAdvanced()` also detects when a button is released and held pressed for a configurable time. See examples for more info. 
