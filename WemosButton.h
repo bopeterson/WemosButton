@@ -29,6 +29,9 @@ class WemosButton {
     //used as variablea in the future if active high will be supported
     byte PRESSED = LOW;
     byte NOTPRESSED = HIGH;
+    //byte PRESSED = HIGH;
+    //byte NOTPRESSED = LOW;
+    
     
     //bitmask constants
     const byte PRESS_DETECTED = 0x01; // hex for 0000 0001

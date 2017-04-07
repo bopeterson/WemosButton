@@ -33,6 +33,7 @@ WemosButton::WemosButton() {
 void WemosButton::begin(int pin) {
     _pin = pin;
     pinMode(_pin, INPUT_PULLUP); //active low
+    //pinMode(_pin,INPUT);
     reading = digitalRead(_pin);
     _buttonState = reading;
     _lastButtonState = _buttonState; //note: this is the last *stable* state
@@ -45,6 +46,8 @@ bool WemosButton::readButton() {
 byte WemosButton::readButtonAdvanced(unsigned long holdTime) {
     //detects press, release and hold
     //button connected to pullup and ground, ie LOW=PRESSED
+    //holdTime is the time in ms that the button must be pressed for hold to be detected
+    //holdTime = 0 means that hold is not detected at all. 
     unsigned long debounceDelay = 15;
     reading = digitalRead(_pin);
     byte pressDetected=false;
