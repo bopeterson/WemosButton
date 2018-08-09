@@ -3,7 +3,7 @@ Arduino library to make it easy to use buttons on Wemos and other ESP8266-based 
 
 Download and put WemosButton-folder + files in Arduino/Libraries
 
-Include the library in your sketch with 
+Include the library in your sketch with
 
 ```cpp
 #include "WemosButton.h"
@@ -24,4 +24,8 @@ This leaves pins D3, D5, D6 and D7 available for INPUT_PULLUP without affecting 
 
 ## How to use
 
-There are two methods, `readButton()` and `readButtonAdvanced()` that are available. `readButton()` is the simple one that only detects when a button is pressed. `readButtonAdvanced()` also detects when a button is released and held pressed for a configurable time. See examples for more info. 
+There are two methods, `readButton()` and `readButtonAdvanced()` that are available. `readButton()` is the simple one that only detects when a button is pressed. `readButtonAdvanced()` also detects when a button is released and held pressed for a configurable time, or double clicked. See examples for more info.
+
+## Debug modes
+
+If WEMBUT_DEBUG is defined TRUE in WemosButton.h, the serial monitor can be used to emulate button presses (just simple press, not hold nor double click). Enter digit 0 to 8 and send to emulate button D0 to D8 being pressed. 
