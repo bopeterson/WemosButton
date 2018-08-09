@@ -27,7 +27,9 @@ WemosButton::WemosButton() {
     _lastButtonState = NOTPRESSED; //note: this is the last *stable* state
     _lastStateSwitchTime = 0;
     _lastPressTime = 0;
+    _nextLastPressTime = 0;
     _onHold = false;
+    _onDouble = false;
 }
 
 void WemosButton::begin(int pin) {
@@ -43,17 +45,27 @@ bool WemosButton::readButton() {
     return readButtonAdvanced(0) & PRESS_DETECTED;
 }
 
+
 byte WemosButton::readButtonAdvanced(unsigned long holdTime) {
-    //detects press, release and hold
+    //kept for backward compatibility reasons
+    return readButtonAdvanced(holdTime,0);
+}
+
+byte WemosButton::readButtonAdvanced(unsigned long holdTime, unsigned long doubleTime) {
+    //detects press, release and hold, and double click
     //button connected to pullup and ground, ie LOW=PRESSED
     //holdTime is the time in ms that the button must be pressed for hold to be detected
     //holdTime = 0 means that hold is not detected at all. 
+    //doubleTime is the maximum time in ms between clicks for double click to be detected
+    //doubleTime = 0 means that double click is not detected at all. 
+    //A tripple click is detected as a double click and a normal click
     unsigned long debounceDelay = 15;
     reading = digitalRead(_pin);
     byte pressDetected=false;
     byte releaseDetected=false;
     byte holdDetected=false;
     byte holdReleaseDetected=false;
+    byte doubleDetected=false;
 
     if (reading != _lastButtonState) {
         // reset the debouncing timer
@@ -72,6 +84,11 @@ byte WemosButton::readButtonAdvanced(unsigned long holdTime) {
             } else {
                 //stable release detected
                 releaseDetected=true;
+                _nextLastPressTime = _lastPressTime;
+                if (_onDouble) {
+                    _onDouble=false;
+                    _nextLastPressTime = 0; //prevent tripple clicks
+                }
                 if (_onHold) {
                     holdReleaseDetected=true;
                     _onHold=false;
@@ -82,11 +99,17 @@ byte WemosButton::readButtonAdvanced(unsigned long holdTime) {
     
     if ((millis() - _lastPressTime) > holdTime && holdTime != 0) {
         if (_buttonState == PRESSED && !_onHold) {
-            //_lastHoldTime=millis();
             _onHold = true;
             holdDetected=true;
         }
     }
+    
+    if ((_lastPressTime-_nextLastPressTime)>0 && (_lastPressTime-_nextLastPressTime) < doubleTime && doubleTime != 0 && !_onDouble && !holdDetected) {
+        _onDouble=true;
+        doubleDetected=true;
+    }
+    
+    
     _lastButtonState = reading;
 
 #if WEMBUT_DEBUG
@@ -103,6 +126,7 @@ byte WemosButton::readButtonAdvanced(unsigned long holdTime) {
     }
 #endif
     
+    //put in bit pattern and return
     byte result = 0x00; //hex for 0000 0000
     if (pressDetected) {
         result |= PRESS_DETECTED; // turn on press detected bit
@@ -116,8 +140,11 @@ byte WemosButton::readButtonAdvanced(unsigned long holdTime) {
     if (holdReleaseDetected) {
         result |= HOLD_RELEASE_DETECTED; // turn on hold release detected bit
     }
+    if (doubleDetected) {
+        result |= DOUBLE_DETECTED; // turn on hold release detected bit
+    }
     
-    //put in bit pattern and return
+
     
 
     return result;

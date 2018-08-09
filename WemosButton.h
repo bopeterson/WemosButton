@@ -22,6 +22,7 @@ class WemosButton {
     
     bool readButton();
     byte readButtonAdvanced(unsigned long holdTime);
+    byte readButtonAdvanced(unsigned long holdTime,unsigned long doubleTime);
     
     byte reading;
     
@@ -38,14 +39,16 @@ class WemosButton {
     const byte RELEASE_DETECTED = 0x02; // hex for 0000 0010
     const byte HOLD_DETECTED = 0x04; // hex for 0000 0100
     const byte HOLD_RELEASE_DETECTED = 0x08; // hex for 0000 1000
+    const byte DOUBLE_DETECTED = 0x10; // hex fo 0001 0000
 
   private:
     byte _buttonState;
     byte _lastButtonState;
     unsigned long _lastStateSwitchTime;
     unsigned long _lastPressTime;
+    unsigned long _nextLastPressTime;
     byte _onHold;
-    
+    byte _onDouble;
     
     int _pin;
 #if WEMBUT_DEBUG
